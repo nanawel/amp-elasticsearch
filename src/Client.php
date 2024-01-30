@@ -8,8 +8,8 @@ use Amp\Http\Client\HttpClient;
 use Amp\Http\Client\HttpClientBuilder;
 use Amp\Http\Client\Request;
 use Amp\Http\Client\Response;
-use function Amp\call;
-use Amp\Promise;
+use Amp\Future;
+use function Amp\async;
 
 class Client
 {
@@ -28,35 +28,35 @@ class Client
         $this->baseUri = rtrim($baseUri, '/');
     }
 
-    public function createIndex(string $index): Promise
+    public function createIndex(string $index): Future
     {
         $method = 'PUT';
         $uri = implode('/', [$this->baseUri, urlencode($index)]);
         return $this->doJsonRequest($method, $uri);
     }
 
-    public function existsIndex(string $index): Promise
+    public function existsIndex(string $index): Future
     {
         $method = 'HEAD';
         $uri = implode('/', [$this->baseUri, urlencode($index)]);
         return $this->doJsonRequest($method, $uri);
     }
 
-    public function getIndex(string $index): Promise
+    public function getIndex(string $index): Future
     {
         $method = 'GET';
         $uri = implode('/', [$this->baseUri, urlencode($index)]);
         return $this->doJsonRequest($method, $uri);
     }
 
-    public function deleteIndex(string $index): Promise
+    public function deleteIndex(string $index): Future
     {
         $method = 'DELETE';
         $uri = implode('/', [$this->baseUri, urlencode($index)]);
         return $this->doJsonRequest($method, $uri);
     }
 
-    public function statsIndex(string $index, string $metric = '_all', array $options = []): Promise
+    public function statsIndex(string $index, string $metric = '_all', array $options = []): Future
     {
         $method = 'GET';
         $uri = implode('/', [$this->baseUri, urlencode($index), '_stats', $metric]);
@@ -72,7 +72,7 @@ class Client
         array $body,
         array $options = [],
         string $type = '_doc'
-    ): Promise {
+    ): Future {
         $method = $id === '' ? 'POST' : 'PUT';
         $uri = implode('/', [$this->baseUri, urlencode($index), urlencode($type), urlencode($id)]);
         if ($options) {
@@ -81,14 +81,14 @@ class Client
         return $this->doRequest($this->createJsonRequest($method, $uri, json_encode($body)));
     }
 
-    public function existsDocument(string $index, string $id, string $type = '_doc'): Promise
+    public function existsDocument(string $index, string $id, string $type = '_doc'): Future
     {
         $method = 'HEAD';
         $uri = implode('/', [$this->baseUri, urlencode($index), urlencode($type), urlencode($id)]);
         return $this->doJsonRequest($method, $uri);
     }
 
-    public function getDocument(string $index, string $id, array $options = [], string $type = '_doc'): Promise
+    public function getDocument(string $index, string $id, array $options = [], string $type = '_doc'): Future
     {
         $method = 'GET';
         $uri = implode('/', [$this->baseUri, urlencode($index), urlencode($type), urlencode($id)]);
@@ -98,7 +98,7 @@ class Client
         return $this->doJsonRequest($method, $uri);
     }
 
-    public function deleteDocument(string $index, string $id, array $options = [], string $type = '_doc'): Promise
+    public function deleteDocument(string $index, string $id, array $options = [], string $type = '_doc'): Future
     {
         $method = 'DELETE';
         $uri = implode('/', [$this->baseUri, urlencode($index), urlencode($type), urlencode($id)]);
@@ -108,22 +108,22 @@ class Client
         return $this->doJsonRequest($method, $uri);
     }
 
-    public function uriSearchOneIndex(string $index, string $query, array $options = []): Promise
+    public function uriSearchOneIndex(string $index, string $query, array $options = []): Future
     {
         return $this->uriSearch($index, $query, $options);
     }
 
-    public function uriSearchManyIndices(array $indices, string $query, array $options = []): Promise
+    public function uriSearchManyIndices(array $indices, string $query, array $options = []): Future
     {
         return $this->uriSearch(implode(',', $indices), $query, $options);
     }
 
-    public function uriSearchAllIndices(string $query, array $options = []): Promise
+    public function uriSearchAllIndices(string $query, array $options = []): Future
     {
         return $this->uriSearch('_all', $query, $options);
     }
 
-    public function catIndices(string $index = null, array $options = []): Promise
+    public function catIndices(string $index = null, array $options = []): Future
     {
         $method = 'GET';
         $uri = [$this->baseUri, '_cat', 'indices'];
@@ -137,7 +137,7 @@ class Client
         return $this->doJsonRequest($method, $uri);
     }
 
-    public function catHealth(array $options = []): Promise
+    public function catHealth(array $options = []): Future
     {
         $method = 'GET';
         $uri = implode('/', [$this->baseUri, '_cat', 'health']);
@@ -147,7 +147,7 @@ class Client
         return $this->doJsonRequest($method, $uri);
     }
 
-    public function refresh(string $indexOrIndices = null, array $options = []): Promise
+    public function refresh(string $indexOrIndices = null, array $options = []): Future
     {
         $method = 'POST';
         $uri = [$this->baseUri];
@@ -162,7 +162,7 @@ class Client
         return $this->doJsonRequest($method, $uri);
     }
 
-    public function search(array $query, ?string $indexOrIndices = null, array $options = []): Promise
+    public function search(array $query, ?string $indexOrIndices = null, array $options = []): Future
     {
         $method = 'POST';
         $uri = [$this->baseUri];
@@ -177,7 +177,7 @@ class Client
         return $this->doRequest($this->createJsonRequest($method, $uri, json_encode($query)));
     }
 
-    public function count(string $index, array $options = [], array $query = null): Promise
+    public function count(string $index, array $options = [], array $query = null): Future
     {
         $method = 'GET';
         $uri = [$this->baseUri, $index];
@@ -193,12 +193,11 @@ class Client
     }
 
 	/**
-	 * @param array|string $body
-	 * @param string|null $index
-	 * @param array       $options
-	 * @return Promise
-	 */
-    public function bulk($body, string $index = null, array $options = []): Promise
+     * @param array|string $body
+     * @param string|null $index
+     * @return Future
+     */
+    public function bulk($body, string $index = null, array $options = []): Future
     {
         $method = 'POST';
         $uri = [$this->baseUri];
@@ -215,11 +214,11 @@ class Client
         );
     }
 
-    public function updateByQuery(array $body, $indexOrIndices = null, array $options = []): Promise {
+    public function updateByQuery(array $body, $indexOrIndices = null, array $options = []): Future {
         $method = 'POST';
         $uri = [$this->baseUri];
         if ($indexOrIndices) {
-            $uri[] = urlencode($indexOrIndices);
+            $uri[] = urlencode((string) $indexOrIndices);
         }
         $uri[] = '_update_by_query';
         $uri = implode('/', $uri);
@@ -242,24 +241,24 @@ class Client
         return $request;
     }
 
-    private function doRequest(Request $request): Promise
+    private function doRequest(Request $request): Future
     {
-        return call(function () use ($request) {
+        return async(function () use ($request) {
             /** @var Response $response */
-            $response = yield $this->httpClient->request($request);
-            $body = yield $response->getBody()->buffer();
+            $response = $this->httpClient->request($request);
+            $body = $response->getBody()->buffer();
             $statusClass = (int) ($response->getStatus() / 100);
             if ($statusClass !== 2) {
                 throw new Error($body, $response->getStatus());
             }
-            if ($body === null) {
+            if ($body === '') {
                 return null;
             }
             return json_decode($body, true);
         });
     }
 
-    private function uriSearch(string $indexOrIndicesOrAll, string $query, array $options): Promise
+    private function uriSearch(string $indexOrIndicesOrAll, string $query, array $options): Future
     {
         $method = 'GET';
         $uri = implode('/', [$this->baseUri, urlencode($indexOrIndicesOrAll), urlencode('_search')]);
@@ -273,11 +272,9 @@ class Client
     }
 
     /**
-     * @param string $method
-     * @param string $uri
-     * @return Promise
+     * @return Future
      */
-    private function doJsonRequest(string $method, string $uri): Promise
+    private function doJsonRequest(string $method, string $uri): Future
     {
         return $this->doRequest($this->createJsonRequest($method, $uri));
     }

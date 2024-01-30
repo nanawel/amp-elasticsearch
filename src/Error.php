@@ -14,7 +14,6 @@ class Error extends \RuntimeException
     /**
      * Error constructor.
      * @param string $errorJson
-     * @param int $code
      */
     public function __construct(?string $errorJson, int $code)
     {
