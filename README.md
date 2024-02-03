@@ -7,6 +7,11 @@ concurrency framework.
 
 :arrow_up: Updated fork requiring **PHP 8.1+**, **AMPHP 5+** and tested with **Elasticsearch 8.12+**.
 
+:warning: Backward incompatible changes:
+- `\Webgriffe\AmpElasticsearch\Client::existsIndex()` returns `false` instead of forwarding the 404 Error returned by
+  the underlying HTTP client when the index does not exist.
+- `\Webgriffe\AmpElasticsearch\Client::existsDocument()` same as above for documents.
+
 :star: Original project (for PHP<8): https://github.com/webgriffe/amp-elasticsearch :star:
 
 ---

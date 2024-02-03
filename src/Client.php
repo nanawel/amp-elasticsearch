@@ -39,7 +39,17 @@ class Client
     {
         $method = 'HEAD';
         $uri = implode('/', [$this->baseUri, urlencode($index)]);
-        return $this->doJsonRequest($method, $uri);
+        return $this->doJsonRequest($method, $uri)
+            ->map(function () {
+                return true;
+            })
+            ->catch(function ($e) {
+                if ($e instanceof Error && $e->getCode() === 404) {
+                    return false;
+                }
+                throw $e;
+            })
+        ;
     }
 
     public function getIndex(string $index): Future
@@ -85,7 +95,17 @@ class Client
     {
         $method = 'HEAD';
         $uri = implode('/', [$this->baseUri, urlencode($index), urlencode($type), urlencode($id)]);
-        return $this->doJsonRequest($method, $uri);
+        return $this->doJsonRequest($method, $uri)
+            ->map(function () {
+                return true;
+            })
+            ->catch(function ($e) {
+                if ($e instanceof Error && $e->getCode() === 404) {
+                    return false;
+                }
+                throw $e;
+            })
+        ;
     }
 
     public function getDocument(string $index, string $id, array $options = [], string $type = '_doc'): Future
@@ -192,7 +212,7 @@ class Client
         return $this->doRequest($this->createJsonRequest($method, $uri));
     }
 
-	/**
+    /**
      * @param array|string $body
      * @param string|null $index
      * @return Future

@@ -38,16 +38,13 @@ class ClientTest extends TestCase
 
     public function testIndicesExistsShouldThrow404ErrorIfIndexDoesNotExists(): void
     {
-        $this->expectException(Error::class);
-        $this->expectExceptionCode(404);
-        $this->client->existsIndex(self::TEST_INDEX)->await();
+        $this->assertFalse($this->client->existsIndex(self::TEST_INDEX)->await());
     }
 
     public function testIndicesExistsShouldNotThrowAnErrorIfIndexExists(): void
     {
         $this->client->createIndex(self::TEST_INDEX)->await();
-        $response = $this->client->existsIndex(self::TEST_INDEX)->await();
-        $this->assertNull($response);
+        $this->assertTrue($this->client->existsIndex(self::TEST_INDEX)->await());
     }
 
     public function testDocumentsIndex(): void
@@ -68,16 +65,13 @@ class ClientTest extends TestCase
     public function testDocumentsExistsShouldThrowA404ErrorIfDocumentDoesNotExists(): void
     {
         $this->client->createIndex(self::TEST_INDEX)->await();
-        $this->expectException(Error::class);
-        $this->expectExceptionCode(404);
-        $this->client->existsDocument(self::TEST_INDEX, 'not-existent-doc')->await();
+        $this->assertFalse($this->client->existsDocument(self::TEST_INDEX, 'not-existent-doc')->await());
     }
 
     public function testDocumentsExistsShouldNotThrowAnErrorIfDocumentExists(): void
     {
         $this->client->indexDocument(self::TEST_INDEX, 'my_id', ['testField' => 'abc'])->await();
-        $response = $this->client->existsDocument(self::TEST_INDEX, 'my_id')->await();
-        $this->assertNull($response);
+        $this->assertTrue($this->client->existsDocument(self::TEST_INDEX, 'my_id')->await());
     }
 
     public function testDocumentsGet(): void
