@@ -230,7 +230,11 @@ class Client
             $uri .= '?' . http_build_query($options);
         }
         return $this->doRequest(
-            $this->createJsonRequest($method, $uri, (is_array($body) ? implode(PHP_EOL, array_map('json_encode', $body)) : $body) . PHP_EOL)
+            $this->createJsonRequest(
+                $method,
+                $uri,
+                (is_array($body) ? implode(PHP_EOL, array_map('json_encode', $body)) : $body) . PHP_EOL
+            )
         );
     }
 
@@ -241,6 +245,21 @@ class Client
             $uri[] = urlencode((string) $indexOrIndices);
         }
         $uri[] = '_update_by_query';
+        $uri = implode('/', $uri);
+        if ($options) {
+            $uri .= '?' . http_build_query($options);
+        }
+        return $this->doRequest($this->createJsonRequest($method, $uri, json_encode($body)));
+    }
+
+    public function updateMapping(array $body, string $index = null, array $options = []): Future {
+        $method = 'PUT';
+        $uri = [$this->baseUri];
+        if (!$index) {
+            $index = '_all';
+        }
+        $uri[] = urlencode((string) $index);
+        $uri[] = '_mapping';
         $uri = implode('/', $uri);
         if ($options) {
             $uri .= '?' . http_build_query($options);
