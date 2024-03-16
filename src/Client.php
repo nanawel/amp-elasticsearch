@@ -252,6 +252,20 @@ class Client
         return $this->doRequest($this->createJsonRequest($method, $uri, json_encode($body)));
     }
 
+    public function deleteByQuery(array $body, $indexOrIndices = null, array $options = []): Future {
+        $method = 'DELETE';
+        $uri = [$this->baseUri];
+        if ($indexOrIndices) {
+            $uri[] = urlencode((string) $indexOrIndices);
+        }
+        $uri[] = '_delete_by_query';
+        $uri = implode('/', $uri);
+        if ($options) {
+            $uri .= '?' . http_build_query($options);
+        }
+        return $this->doRequest($this->createJsonRequest($method, $uri, json_encode($body)));
+    }
+
     public function updateMapping(array $body, string $index = null, array $options = []): Future {
         $method = 'PUT';
         $uri = [$this->baseUri];
