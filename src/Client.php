@@ -253,7 +253,7 @@ class Client
     }
 
     public function deleteByQuery(array $body, $indexOrIndices = null, array $options = []): Future {
-        $method = 'DELETE';
+        $method = 'POST';
         $uri = [$this->baseUri];
         if ($indexOrIndices) {
             $uri[] = urlencode((string) $indexOrIndices);
